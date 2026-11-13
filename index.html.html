@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кофейня «Зерно» — прототип мини-приложения</title>
+<style>
+:root{
+  --bg:#1b1713; --card:#27211b; --chip:#342b23; --text:#f3ebe0; --muted:#a89a8a;
+  --accent:#e8893a; --on-accent:#1b1713; --ok:#7bc47f;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#f6efe6;--card:#fffaf3;--chip:#eadfd0;--text:#2a2118;--muted:#7a6a58;--accent:#d9701c;--on-accent:#fff;--ok:#3d8b43}
+}
+:root[data-theme="light"]{--bg:#f6efe6;--card:#fffaf3;--chip:#eadfd0;--text:#2a2118;--muted:#7a6a58;--accent:#d9701c;--on-accent:#fff;--ok:#3d8b43}
+:root[data-theme="dark"]{--bg:#1b1713;--card:#27211b;--chip:#342b23;--text:#f3ebe0;--muted:#a89a8a;--accent:#e8893a;--on-accent:#1b1713;--ok:#7bc47f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;padding:16px 16px 120px}
+h1{font-size:22px;margin:4px 0 2px;font-weight:700}
+.sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.tab,.chip{border:0;background:var(--chip);color:var(--text);font:inherit;font-size:15px;padding:10px 16px;border-radius:14px;cursor:pointer;white-space:nowrap}
+.tab[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+.tab:focus-visible,.chip:focus-visible,.go:focus-visible,.qty button:focus-visible{outline:3px solid var(--text);outline-offset:2px}
+.hero{background:var(--card);border-radius:20px;padding:16px;display:flex;gap:16px;align-items:center;margin-bottom:18px}
+.cup{width:64px;height:92px;flex:none;border-radius:8px 8px 14px 14px;background:linear-gradient(var(--chip) 0 30%,var(--accent) 30% 70%,var(--chip) 70%);position:relative}
+.cup::before{content:"";position:absolute;left:-4px;right:-4px;top:-8px;height:12px;border-radius:6px;background:var(--text);opacity:.85}
+.hero h2{margin:0 0 4px;font-size:20px}
+.hero p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.size{flex:1;text-align:center;padding:8px 4px}
+.size small{display:block;font-weight:400;font-size:12px;opacity:.8}
+h3{font-size:14px;color:var(--muted);margin:16px 0 8px;font-weight:600}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:linear-gradient(transparent,var(--bg) 35%);padding:24px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.bar>div{width:100%;max-width:430px;display:flex;gap:10px}
+.qty{display:flex;align-items:center;background:var(--chip);border-radius:14px}
+.qty button{border:0;background:none;color:var(--text);font-size:22px;width:44px;height:48px;cursor:pointer}
+.qty span{min-width:22px;text-align:center;font-weight:700}
+.go{flex:1;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:17px;font-weight:700;cursor:pointer}
+.done{display:none;text-align:center;padding:60px 16px}
+.done .tick{width:72px;height:72px;border-radius:50%;background:var(--ok);color:#fff;font-size:40px;line-height:72px;margin:0 auto 16px}
+.done button{margin-top:20px;border:0;background:var(--chip);color:var(--text);font:inherit;padding:12px 20px;border-radius:14px;cursor:pointer}
+.note{font-size:12px;color:var(--muted);text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="menu">
+    <h1>Кофейня «Зерно»</h1>
+    <p class="sub">Выбери напиток — заберёшь через 10 минут</p>
+    <div class="tabs" id="tabs" role="group" aria-label="Напиток"></div>
+    <div class="hero">
+      <div class="cup" aria-hidden="true"></div>
+      <div>
+        <h2 id="name"></h2>
+        <p id="desc"></p>
+        <div class="row" id="sizes" role="group" aria-label="Размер"></div>
+      </div>
+    </div>
+    <h3>Молоко</h3><div class="row" id="milk" role="group" aria-label="Молоко"></div>
+    <h3>Сироп</h3><div class="row" id="syrup" role="group" aria-label="Сироп"></div>
+    <p class="note">Прототип: оплата и отправка заказа бариста пока не подключены.</p>
+  </div>
+  <div class="done" id="done">
+    <div class="tick">✓</div>
+    <h1>Заказ принят</h1>
+    <p class="sub" id="summary"></p>
+    <button id="again">Заказать ещё</button>
+  </div>
+</div>
+<div class="bar" id="bar"><div>
+  <div class="qty"><button id="minus" aria-label="Меньше">−</button><span id="q">1</span><button id="plus" aria-label="Больше">+</button></div>
+  <button class="go" id="go"></button>
+</div></div>
+<script>
+var DRINKS=[
+ {n:"Капучино",d:"Эспрессо и молочная пена",p:230},
+ {n:"Латте",d:"Эспрессо и много молока",p:250},
+ {n:"Раф",d:"Эспрессо, сливки и ваниль",p:300},
+ {n:"Американо",d:"Двойной эспрессо и горячая вода",p:180}
+];
+var SIZES=[{l:"S",ml:250,add:0},{l:"M",ml:350,add:40},{l:"L",ml:450,add:80}];
+var MILK=[{l:"Обычное",add:0},{l:"Овсяное",add:50},{l:"Кокосовое",add:50}];
+var SYRUP=[{l:"Без сиропа",add:0},{l:"Карамель",add:30},{l:"Ваниль",add:30},{l:"Орех",add:30}];
+var s={d:3,size:2,milk:0,syrup:1,q:1};
+function $(id){return document.getElementById(id)}
+function plus(a){return a?" +"+a+" ₽":""}
+function group(el,items,key,fmt){
+  el.innerHTML="";
+  items.forEach(function(it,i){
+    var b=document.createElement("button");
+    b.className="chip"+(el.id==="sizes"?" size":"");
+    b.setAttribute("aria-pressed",s[key]===i);
+    b.innerHTML=fmt(it);
+    b.onclick=function(){s[key]=i;render()};
+    el.appendChild(b);
+  });
+}
+function total(){
+  var d=DRINKS[s.d];
+  return (d.p+SIZES[s.size].add+MILK[s.milk].add+SYRUP[s.syrup].add)*s.q;
+}
+function render(){
+  var d=DRINKS[s.d];
+  $("tabs").innerHTML="";
+  DRINKS.forEach(function(x,i){
+    var b=document.createElement("button");
+    b.className="tab";b.textContent=x.n;b.setAttribute("aria-pressed",s.d===i);
+    b.onclick=function(){s.d=i;render()};
+    $("tabs").appendChild(b);
+  });
+  $("name").textContent=d.n;$("desc").textContent=d.d;
+  group($("sizes"),SIZES,"size",function(x){return x.l+"<small>"+x.ml+" мл</small>"});
+  group($("milk"),MILK,"milk",function(x){return x.l+plus(x.add)});
+  group($("syrup"),SYRUP,"syrup",function(x){return x.l+plus(x.add)});
+  $("q").textContent=s.q;
+  $("go").textContent="Заказать · "+total()+" ₽";
+}
+$("minus").onclick=function(){if(s.q>1){s.q--;render()}};
+$("plus").onclick=function(){if(s.q<9){s.q++;render()}};
+$("go").onclick=function(){
+  var d=DRINKS[s.d];
+  $("summary").textContent=s.q+" × "+d.n+" "+SIZES[s.size].l+", "+MILK[s.milk].l.toLowerCase()+" молоко, "+SYRUP[s.syrup].l.toLowerCase()+". Итого "+total()+" ₽";
+  $("menu").style.display="none";$("bar").style.display="none";$("done").style.display="block";
+};
+$("again").onclick=function(){
+  s.q=1;$("done").style.display="none";$("menu").style.display="block";$("bar").style.display="flex";render();
+};
+render();
+</script>
+</body>
+</html>
